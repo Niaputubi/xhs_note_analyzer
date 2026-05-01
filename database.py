@@ -134,6 +134,53 @@ def get_note_types():
     return types
 
 
+def update_note(note_id, data):
+    """更新一条笔记记录
+
+    Args:
+        note_id: 笔记 ID
+        data: 包含更新字段的字典
+
+    Returns:
+        bool: 更新是否成功
+    """
+    allowed_fields = [
+        "title", "content", "author_name", "like_count",
+        "collect_count", "comment_count", "publish_time",
+        "url", "tags", "note_type", "my_notes",
+    ]
+    set_clauses = []
+    params = []
+    for field in allowed_fields:
+        if field in data:
+            set_clauses.append(f"{field} = ?")
+            params.append(data[field])
+
+    if not set_clauses:
+        return False
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    sql = f"UPDATE notes SET {', '.join(set_clauses)} WHERE id = ?"
+    params.append(note_id)
+    cursor.execute(sql, params)
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
+def delete_note(note_id):
+    """删除一条笔记记录"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
 def get_statistics():
     """获取基本统计数据"""
     conn = get_connection()
